@@ -1,57 +1,74 @@
-import { listenEntries } from "@/lib/entries";
-import { useAuth } from "@/src/context/AuthProvider";
+import { auth, db } from "@/src/firebase";
+import { emotionToLabel } from "@/src/lib/emotions";
+import { normalizeTimestamp } from "@/src/lib/normalize";
 import { useRouter } from "expo-router";
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Button, FlatList, Text, View } from "react-native";
+import { ActivityIndicator, Button, FlatList, Text, TouchableOpacity, View } from "react-native";
 
-export default function EntriesTab() {
-  const { user } = useAuth();
+export default function EntriesScreen() {
+  console.log("Entries screen mounted"); // ←ここが「export直後」
+
   const router = useRouter();
+  const user = auth.currentUser;
 
   const [entries, setEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log("Entries useEffect - user:", user?.uid);
+
     if (!user) return;
 
-    const unsub = listenEntries((items) => {
-      setEntries(items);
+    const ref = collection(db, "users", user.uid, "entries");
+    const q = query(ref, orderBy("createdAt", "desc"));
+
+    const unsub = onSnapshot(q, (snap) => {
+      console.log("Firestore snapshot:", snap.size, "docs");
+      setEntries(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
       setLoading(false);
     });
 
-    return () => unsub?.();
+    return () => unsub();
   }, [user]);
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator />
-      </View>
-    );
-  }
+  if (loading) return <ActivityIndicator />;
 
-  if (entries.length === 0) {
+  if (entries.length === 0)
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text style={{ marginBottom: 16 }}>まだ記録がありません</Text>
-        <Button title="新規作成" onPress={() => router.push("/entries/new")} />
+      <View style={{ flex:1, justifyContent:"center", alignItems:"center" }}>
+        <Text>まだ記録がありません</Text>
+        <Button title="新規作成" onPress={() => router.push("/(tabs)/entries/new")} />
       </View>
     );
-  }
 
   return (
     <FlatList
       data={entries}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
-        <View style={{ padding: 16, borderBottomWidth: 1 }}>
-          <Text>{item.text}</Text>
-          <Text style={{ fontSize: 12, color: "#666" }}>
-            {item.createdAt?.toLocaleString?.()}
+        <TouchableOpacity
+          style={{
+            padding: 16,
+            borderBottomWidth: 1,
+            borderColor: "#ddd",
+            alignItems: "center",   // ← ★これ追加
+          }}
+
+          onPress={() => router.push(`/(tabs)/entries/${item.id}`)}
+        >
+          <Text style={{ fontSize: 32 }}>
+          {emotionToLabel(item.emotion)}
           </Text>
-        </View>
+
+          <Text numberOfLines={1}>{item.text}</Text>
+          <Text style={{ fontSize:12, color:"#666" }}>
+            <Text style={{ fontSize:12, color:"#666" }}>
+              {normalizeTimestamp(item.createdAt)?.toLocaleString()}
+            </Text>
+          </Text>
+        </TouchableOpacity>
       )}
     />
   );
 }
-

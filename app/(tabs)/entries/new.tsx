@@ -1,40 +1,31 @@
 import { auth, db } from "@/src/firebase";
+import { EMOTIONS } from "@/src/lib/emotions";
 import { useRouter } from "expo-router";
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { useState } from "react";
-import { ActivityIndicator, Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-
-const moods = ["嬉しい", "悲しい", "普通", "怒り", "好き"];
+import { Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 export default function NewEntryScreen() {
   const router = useRouter();
   const [text, setText] = useState("");
-  const [mood, setMood] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [emotion, setEmotion] = useState<string | null>(null);
 
   const user = auth.currentUser;
 
   const handleSave = async () => {
-    if (!mood || !text || !user) return;
-
-    setLoading(true);
-
-    const now = new Date();
+    if (!user || !emotion || !text) return;
 
     await addDoc(collection(db, "users", user.uid, "entries"), {
       text,
-      emotion: mood, // ←統一
-      date: now.toISOString().slice(0, 10), // YYYY-MM-DD
-      createdAt: now.toISOString(), // ソート用
+      emotion,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
     });
 
-    setLoading(false);
-    router.replace("/(tabs)/entries");
+    router.back()
   };
 
-  if (!user) {
-    return <Text>ログインしていません</Text>;
-  }
+  if (!user) return <Text>ログインしてください</Text>;
 
   return (
     <View style={styles.container}>
@@ -47,20 +38,19 @@ export default function NewEntryScreen() {
       />
 
       <Text style={styles.label}>気分</Text>
-
-      <View style={styles.moods}>
-        {moods.map((m) => (
+      <View style={styles.row}>
+        {EMOTIONS.map((m) => (
           <TouchableOpacity
-            key={m}
-            style={[styles.moodBtn, mood === m && styles.moodSelected]}
-            onPress={() => setMood(m)}
+            key={m.value}
+            style={[styles.moodBtn, emotion === m.value && styles.selected]}
+            onPress={() => setEmotion(m.value)}
           >
-            <Text>{m}</Text>
+            <Text style={{ fontSize: 24 }}>{m.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      {loading ? <ActivityIndicator /> : <Button title="保存" onPress={handleSave} />}
+      <Button title="保存" onPress={handleSave} />
     </View>
   );
 }
@@ -76,15 +66,16 @@ const styles = StyleSheet.create({
     minHeight: 120,
     textAlignVertical: "top"
   },
-  moods: { flexDirection: "row", gap: 8, marginTop: 10 },
+  row: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginVertical: 10 },
   moodBtn: {
     borderWidth: 1,
     borderColor: "#ccc",
-    padding: 8,
-    borderRadius: 6
+    padding: 12,
+    borderRadius: 8,
   },
-  moodSelected: {
-    borderWidth: 2,
+  selected: {
     borderColor: "#007aff",
+    borderWidth: 2,
   }
 });
+

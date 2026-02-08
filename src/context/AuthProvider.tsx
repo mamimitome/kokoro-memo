@@ -19,6 +19,9 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     return () => unsub();
   }, []);
 
+
+  console.log("AuthProvider rendered", { user, initializing });
+
   return (
     <AuthContext.Provider value={{ user, initializing }}>
       {children}

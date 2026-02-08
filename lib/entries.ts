@@ -18,7 +18,7 @@ export async function addEntry({
   date,
 }: {
   text: string;
-  emotion: string;
+  emotion: { label: string; value: string };
   date: string;
 }) {
   const user = auth.currentUser;
@@ -33,6 +33,7 @@ export async function addEntry({
     createdAt: serverTimestamp(),
   });
 }
+
 
 
 // ② リアルタイム取得（一覧）
@@ -108,4 +109,10 @@ export async function getEntry(id: string) {
   };
 }
 
+//一覧で label を探す関数を追加
+
+export function emotionToLabel(value: string) {
+  const found = EMOTIONS.find(e => e.value === value);
+  return found?.label ?? "❓";
+}
 

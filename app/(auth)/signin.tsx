@@ -1,8 +1,10 @@
+
+console.log("SIGNIN RENDERED");
+import { auth } from "@/src/firebase";
 import { useRouter } from "expo-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useState } from "react";
 import { Button, Text, TextInput, View } from "react-native";
-import { auth } from "../../src/firebase";
 
 export default function SignInScreen() {
   const [email, setEmail] = useState("");
