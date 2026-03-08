@@ -4,7 +4,7 @@ import { normalizeTimestamp } from "@/src/lib/normalize";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { deleteDoc, doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { Button, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function EntryDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -25,7 +25,13 @@ export default function EntryDetailScreen() {
     });
   }, [id, user]);
 
-  if (!entry) return <Text>読み込み中...</Text>;
+  if (!entry) {
+    return (
+      <View style={styles.loading}>
+        <Text>読み込み中...</Text>
+      </View>
+    );
+  }
 
   const handleDelete = async () => {
     if (!user) return;
@@ -35,27 +41,91 @@ export default function EntryDetailScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={{ fontSize: 40 }}>
-        {emotionToLabel(entry.emotion)}
-      </Text>
+      <View style={styles.card}>
+        <Text style={styles.emoji}>{emotionToLabel(entry.emotion)}</Text>
 
-      <Text style={styles.text}>{entry.text}</Text>
+        <Text style={styles.text}>{entry.text}</Text>
 
-      <Text style={styles.date}>
-        {normalizeTimestamp(entry.createdAt)?.toLocaleString()}
-      </Text>
+        <Text style={styles.date}>
+          {normalizeTimestamp(entry.createdAt)?.toLocaleString()}
+        </Text>
 
-      <Button title="編集" onPress={() => router.push(`/(tabs)/entries/${id}/edit`)} />
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => router.push(`/(tabs)/entries/${id}/edit`)}
+        >
+          <Text style={styles.buttonText}>編集</Text>
+        </TouchableOpacity>
 
-      <View style={{ height:10 }} />
-      <Button title="削除" color="red" onPress={handleDelete} />
+        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+          <Text style={styles.deleteText}>削除</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex:1, padding:20 },
-  text: { fontSize:18, marginTop:10 },
-  date: { marginTop:10, fontSize:12, color:"#666" }
-});
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#F5F7FA",
+  },
 
+  card: {
+    backgroundColor: "white",
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 5,
+  },
+
+  emoji: {
+    fontSize: 40,
+    marginBottom: 10,
+  },
+
+  text: {
+    fontSize: 18,
+    marginBottom: 10,
+  },
+
+  date: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 20,
+  },
+
+  button: {
+    backgroundColor: "#4A90E2",
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
+  buttonText: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+
+  deleteButton: {
+    padding: 12,
+    alignItems: "center",
+  },
+
+  deleteText: {
+    color: "#E53935",
+    fontWeight: "600",
+  },
+
+  loading: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});

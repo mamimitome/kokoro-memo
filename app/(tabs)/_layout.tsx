@@ -1,11 +1,18 @@
 import { useAuth } from "@/src/context/AuthProvider";
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Tabs, useRouter } from "expo-router";
+import { ActivityIndicator, View } from "react-native";
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, initializing } = useAuth();
 
-  if (initializing) return null;
+  if (initializing)
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+
   if (!user) return <Redirect href="/(auth)/signin" />;
 
   return children;
@@ -16,18 +23,46 @@ export default function TabsLayout() {
 
   return (
     <AuthGate>
-      <Tabs>
-        {/* ✅ Entries（＋ボタン付き） */}
+      <Tabs
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: "#ffffff",
+          },
+          headerTitleStyle: {
+            fontWeight: "600",
+          },
+
+          tabBarActiveTintColor: "#4A90E2",
+          tabBarInactiveTintColor: "#999",
+
+          tabBarStyle: {
+            backgroundColor: "white",
+            borderTopWidth: 0,
+            elevation: 10, // Android
+            height: 70,
+            paddingBottom: 10,
+          },
+
+          tabBarLabelStyle: {
+            fontSize: 12,
+            fontWeight: "600",
+          },
+        }}
+      >
+        {/* ✅ Entries */}
         <Tabs.Screen
           name="entries"
           options={{
-            title: "Entries",
+            title: "記録",
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="list" size={size} color={color} />
+            ),
             headerRight: () => (
               <Ionicons
-                name="add-circle-outline"
-                size={28}
-                color="#007aff"
-                style={{ marginRight: 12 }}
+                name="add-circle"
+                size={30}
+                color="#4A90E2"
+                style={{ marginRight: 16 }}
                 onPress={() => router.push("/(tabs)/entries/new")}
               />
             ),
@@ -37,10 +72,15 @@ export default function TabsLayout() {
         {/* ✅ Profile */}
         <Tabs.Screen
           name="profile"
-          options={{ title: "Profile" }}
+          options={{
+            title: "プロフィール",
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="person" size={size} color={color} />
+            ),
+          }}
         />
 
-        {/* ❌ タブ非表示（内部ページ） */}
+        {/* ❌ 非表示ページ */}
         <Tabs.Screen name="entries/new" options={{ href: null }} />
         <Tabs.Screen name="entries/[id]" options={{ href: null }} />
         <Tabs.Screen name="entries/[id]/edit" options={{ href: null }} />
@@ -48,5 +88,3 @@ export default function TabsLayout() {
     </AuthGate>
   );
 }
-
-

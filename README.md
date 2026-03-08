@@ -20,8 +20,6 @@
 
 ## Screenshot
 
-（ここに後で画像追加）
-
 ## Getting Started
 
 npm install
